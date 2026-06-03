@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sonice Cut — Réservation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --electric: #0066FF;
+    --deep: #001A4D;
+    --ice: #C8DCFF;
+    --ice-soft: #EAF1FF;
+    --mid: #0044BB;
+    --white: #FFFFFF;
+    --glass: rgba(0,102,255,0.08);
+    --border: rgba(0,102,255,0.2);
+    --text: #0D1B3E;
+    --muted: #4A6080;
+    --success: #00C875;
+    --error: #FF3B3B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--deep);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,102,255,0.35) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0,68,187,0.2) 0%, transparent 60%),
+      var(--deep);
+    pointer-events: none;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 40px 0 32px;
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 20px 8px 8px;
+    margin-bottom: 24px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--electric);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-badge span { font-size: 13px; font-weight: 500; letter-spacing: 0.08em; color: var(--ice); }
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 18vw, 80px);
+    letter-spacing: 0.04em;
+    line-height: 0.9;
+    background: linear-gradient(135deg, var(--white) 0%, var(--ice) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .tagline { font-size: 13px; color: rgba(200,220,255,0.6); margin-top: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* STEP INDICATOR */
+  .steps {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin: 28px 0 32px;
+  }
+  .step-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: rgba(200,220,255,0.4);
+    transition: all 0.3s;
+    position: relative; z-index: 1;
+  }
+  .step-dot.active { background: var(--electric); border-color: var(--electric); color: #fff; }
+  .step-dot.done { background: var(--success); border-color: var(--success); color: #fff; }
+  .step-line { width: 36px; height: 1.5px; background: var(--border); margin: 0 -1px; }
+  .step-line.done { background: var(--success); }
+
+  /* CARDS / SECTIONS */
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--electric);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::before { content: ''; display: block; width: 16px; height: 2px; background: var(--electric); border-radius: 2px; }
+
+  /* PRESTATIONS */
+  .prestation-grid { display: flex; flex-direction: column; gap: 10px; }
+  .prestation-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px; border-radius: 14px;
+    border: 1.5px solid rgba(0,102,255,0.15);
+    cursor: pointer; transition: all 0.25s;
+    background: transparent;
+    color: var(--white);
+    width: 100%; text-align: left;
+  }
+  .prestation-item:hover { border-color: var(--electric); background: var(--glass); }
+  .prestation-item.selected { border-color: var(--electric); background: rgba(0,102,255,0.15); }
+  .prestation-icon { font-size: 22px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border-radius: 10px; flex-shrink: 0; }
+  .prestation-info { flex: 1; }
+  .prestation-name { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+  .prestation-sub { font-size: 12px; color: rgba(200,220,255,0.5); }
+  .prestation-price { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--electric); letter-spacing: 0.05em; }
+  .radio-dot { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(200,220,255,0.25); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .prestation-item.selected .radio-dot { border-color: var(--electric); background: var(--electric); }
+  .radio-dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; opacity: 0; transition: opacity 0.2s; }
+  .prestation-item.selected .radio-dot::after { opacity: 1; }
+
+  /* CALENDAR */
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .cal-month { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.05em; }
+  .cal-nav { display: flex; gap: 8px; }
+  .cal-btn {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    color: var(--white); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .cal-btn:hover { background: var(--electric); border-color: var(--electric); }
+  .cal-days-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
+  .cal-day-name { text-align: center; font-size: 11px; color: rgba(200,220,255,0.4); font-weight: 500; padding: 4px 0; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-cell {
+    aspect-ratio: 1; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; position: relative;
+    border: 1.5px solid transparent;
+  }
+  .cal-cell.empty { cursor: default; }
+  .cal-cell.past { color: rgba(200,220,255,0.15); cursor: default; }
+  .cal-cell.blocked { color: rgba(200,220,255,0.15); cursor: not-allowed; text-decoration: line-through; }
+  .cal-cell.available { color: var(--white); }
+  .cal-cell.available:hover { background: var(--glass); border-color: var(--electric); }
+  .cal-cell.selected { background: var(--electric); border-color: var(--electric); color: #fff; }
+  .cal-cell.today::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--electric); }
+  .cal-cell.selected.today::after { background: rgba(255,255,255,0.6); }
+
+  /* TIME SLOTS */
+  .slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .slot-btn {
+    padding: 12px 8px; border-radius: 12px;
+    background: transparent; border: 1.5px solid rgba(0,102,255,0.2);
+    color: var(--white); font-size: 14px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .slot-btn:hover { border-color: var(--electric); background: var(--glass); }
+  .slot-btn.selected { background: var(--electric); border-color: var(--electric); }
+  .slot-btn.taken { color: rgba(200,220,255,0.2); cursor: not-allowed; border-color: rgba(0,102,255,0.08); text-decoration: line-through; }
+  .no-slots { text-align: center; color: rgba(200,220,255,0.4); font-size: 13px; padding: 20px 0; }
+
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ice); opacity: 0.6; margin-bottom: 8px; }
+  input {
+    width: 100%; padding: 14px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid var(--border);
+    border-radius: 12px; color: var(--white);
+    font-size: 15px; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  input::placeholder { color: rgba(200,220,255,0.3); }
+  input:focus { border-color: var(--electric); background: rgba(0,102,255,0.06); }
+
+  /* SUMMARY BAR */
+  .summary-bar {
+    background: rgba(0,102,255,0.12);
+    border: 1px solid rgba(0,102,255,0.25);
+    border-radius: 16px; padding: 16px 20px;
+    margin-bottom: 16px; display: none;
+  }
+  .summary-bar.visible { display: block; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .summary-row + .summary-row { margin-top: 6px; }
+  .summary-label { color: rgba(200,220,255,0.5); }
+  .summary-value { font-weight: 500; color: var(--ice); }
+  .summary-divider { border: none; border-top: 1px solid rgba(0,102,255,0.2); margin: 10px 0; }
+
+  /* CTA BUTTON */
+  .btn-reserve {
+    width: 100%; padding: 18px;
+    background: var(--electric);
+    border: none; border-radius: 16px;
+    color: #fff; font-size: 16px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.3s;
+    letter-spacing: 0.02em;
+    position: relative; overflow: hidden;
+  }
+  .btn-reserve:hover { background: #0055DD; transform: translateY(-1px); }
+  .btn-reserve:active { transform: scale(0.99); }
+  .btn-reserve:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* SUCCESS SCREEN */
+  .success-screen {
+    display: none; text-align: center;
+    padding: 60px 0 40px;
+  }
+  .success-screen.visible { display: block; }
+  .success-icon {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(0,200,117,0.15);
+    border: 2px solid var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin: 0 auto 28px;
+    animation: pop 0.4s ease;
+  }
+  @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+  .success-title { font-family: 'Bebas Neue', sans-serif; font-size: 44px; letter-spacing: 0.04em; color: var(--success); margin-bottom: 12px; }
+  .success-sub { font-size: 14px; color: rgba(200,220,255,0.6); line-height: 1.6; margin-bottom: 32px; }
+  .success-recap { background: rgba(0,200,117,0.08); border: 1px solid rgba(0,200,117,0.2); border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 28px; }
+  .recap-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
+  .recap-label { color: rgba(200,220,255,0.5); }
+  .recap-value { font-weight: 500; }
+  .btn-new { background: transparent; border: 1.5px solid var(--border); border-radius: 14px; color: var(--ice); font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; padding: 14px 32px; cursor: pointer; transition: all 0.2s; }
+  .btn-new:hover { border-color: var(--electric); color: var(--white); }
+
+  /* LOADER */
+  .btn-reserve .spinner { display: none; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto; }
+  .btn-reserve.loading .spinner { display: block; }
+  .btn-reserve.loading .btn-text { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--error); color: #fff; padding: 12px 24px;
+    border-radius: 50px; font-size: 13px; font-weight: 500;
+    transition: transform 0.3s; z-index: 100; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.green { background: var(--success); }
+
+  /* Fade sections */
+  .booking-flow { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .payment-note {
+    text-align: center; font-size: 12px; color: rgba(200,220,255,0.4);
+    margin-top: 12px; letter-spacing: 0.02em;
+  }
+  .payment-note span { color: var(--ice); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo-badge">
+      <div class="logo-icon">✂️</div>
+      <span>SONICE CUT PARIS</span>
+    </div>
+    <h1>RÉSERVE<br>TON TOUR</h1>
+    <p class="tagline">Coiffeur · Barbier · Paris</p>
+  </header>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step-dot active" id="s1">1</div>
+    <div class="step-line" id="l1"></div>
+    <div class="step-dot" id="s2">2</div>
+    <div class="step-line" id="l2"></div>
+    <div class="step-dot" id="s3">3</div>
+    <div class="step-line" id="l3"></div>
+    <div class="step-dot" id="s4">4</div>
+  </div>
+
+  <div class="booking-flow" id="bookingFlow">
+
+    <!-- ÉTAPE 1 : PRESTATION -->
+    <div class="card" id="stepPrestation">
+      <div class="card-title">Choisis ta prestation</div>
+      <div class="prestation-grid">
+        <button class="prestation-item" onclick="selectPrestation(this, 'Coupe', 10)" data-price="10" data-name="Coupe">
+          <div class="prestation-icon">💈</div>
+          <div class="prestation-info">
+            <div class="prestation-name">Coupe</div>
+            <div class="prestation-sub">Coupe homme stylisée</div>
+          </div>
+          <div class="prestation-price">10€</div>
+          <div class="radio-dot"></div>
+        </button>
+        <button class="prestation-item" onclick="selectPrestation(this, 'Coupe & Barbe', 15)" data-price="15" data-name="Coupe & Barbe">
+          <div class="prestation-icon">✨</div>
+          <div class="prestation-info">
+            <div class="prestation-name">Coupe & Barbe</div>
+            <div class="prestation-sub">Le pack complet</div>
+          </div>
+          <div class="prestation-price">15€</div>
+          <div class="radio-dot"></div>
+        </button>
+        <button class="prestation-item" onclick="selectPrestation(this, 'Barbe', 10)" data-price="10" data-name="Barbe">
+          <div class="prestation-icon">🪒</div>
+          <div class="prestation-info">
+            <div class="prestation-name">Barbe</div>
+            <div class="prestation-sub">Taille & entretien</div>
+          </div>
+          <div class="prestation-price">10€</div>
+          <div class="radio-dot"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 : CALENDRIER -->
+    <div class="card" id="stepCalendar">
+      <div class="card-title">Choisis une date</div>
+      <div class="cal-header">
+        <div class="cal-month" id="calMonth"></div>
+        <div class="cal-nav">
+          <button class="cal-btn" onclick="changeMonth(-1)">‹</button>
+          <button class="cal-btn" onclick="changeMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="cal-days-header">
+        <div class="cal-day-name">L</div><div class="cal-day-name">M</div>
+        <div class="cal-day-name">M</div><div class="cal-day-name">J</div>
+        <div class="cal-day-name">V</div><div class="cal-day-name">S</div>
+        <div class="cal-day-name">D</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <!-- ÉTAPE 3 : CRÉNEAU -->
+    <div class="card" id="stepSlots" style="display:none">
+      <div class="card-title">Choisis un créneau</div>
+      <div id="slotsContainer"></div>
+    </div>
+
+    <!-- SUMMARY BAR -->
+    <div class="summary-bar" id="summaryBar">
+      <div class="summary-row">
+        <span class="summary-label">Prestation</span>
+        <span class="summary-value" id="sumPrestation">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Date</span>
+        <span class="summary-value" id="sumDate">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Heure</span>
+        <span class="summary-value" id="sumTime">—</span>
+      </div>
+      <hr class="summary-divider">
+      <div class="summary-row">
+        <span class="summary-label">Total</span>
+        <span class="summary-value" style="color: var(--electric); font-size:15px;" id="sumTotal">—</span>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 4 : FORMULAIRE -->
+    <div class="card" id="stepForm" style="display:none">
+      <div class="card-title">Tes infos</div>
+      <div class="form-group">
+        <label>Prénom</label>
+        <input type="text" id="fPrenom" placeholder="Ton prénom" autocomplete="given-name">
+      </div>
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" id="fNom" placeholder="Ton nom" autocomplete="family-name">
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input type="tel" id="fTel" placeholder="06 00 00 00 00" autocomplete="tel">
+      </div>
+    </div>
+
+    <button class="btn-reserve" id="btnReserve" onclick="submitBooking()" disabled>
+      <span class="btn-text">Confirmer le rendez-vous</span>
+      <div class="spinner"></div>
+    </button>
+    <p class="payment-note">💳 Paiement <span>sur place</span> — aucune CB requise</p>
+
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <div class="success-title">C'EST BOOKÉ !</div>
+    <p class="success-sub">Ton rendez-vous est confirmé.<br>On t'attend avec le style.</p>
+    <div class="success-recap" id="successRecap"></div>
+    <button class="btn-new" onclick="resetBooking()">← Faire une autre réservation</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIGURATION ────────────────────────────────────────────────
+// Horaires de base : 10h à 21h (créneaux de 60 min, le dernier débute à 20h)
+const BASE_HOURS = [];
+for(let h=10; h<=20; h++) BASE_HOURS.push(h);
+
+// Clé de stockage localStorage
+const STORAGE_KEY = 'sonicecut_bookings';
+const BLOCKED_KEY = 'sonicecut_blocked';
+
+// ─── STATE ────────────────────────────────────────────────────────
+let state = {
+  prestation: null,
+  price: null,
+  selectedDate: null,
+  selectedTime: null,
+  month: new Date().getMonth(),
+  year: new Date().getFullYear()
+};
+
+// ─── STORAGE HELPERS ─────────────────────────────────────────────
+function getBookings() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveBooking(b) {
+  const all = getBookings();
+  all.push(b);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+}
+function isSlotTaken(dateStr, hour) {
+  return getBookings().some(b => b.date === dateStr && b.hour === hour);
+}
+function getBlockedSlots() {
+  try { return JSON.parse(localStorage.getItem(BLOCKED_KEY) || '{}'); } catch(e) { return {}; }
+}
+function isDateBlocked(dateStr) {
+  const b = getBlockedSlots();
+  return b[dateStr] && b[dateStr].allDay === true;
+}
+function isHourBlocked(dateStr, hour) {
+  const b = getBlockedSlots();
+  return b[dateStr] && b[dateStr].hours && b[dateStr].hours.includes(hour);
+}
+
+// ─── PRESTATION ──────────────────────────────────────────────────
+function selectPrestation(el, name, price) {
+  document.querySelectorAll('.prestation-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  state.prestation = name;
+  state.price = price;
+  updateSteps();
+  updateSummary();
+  checkSubmit();
+}
+
+// ─── CALENDAR ────────────────────────────────────────────────────
+const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  const { month, year } = state;
+  document.getElementById('calMonth').textContent = MONTHS[month] + ' ' + year;
+  grid.innerHTML = '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const first = new Date(year, month, 1);
+  let startDay = first.getDay(); // 0=Sun
+  startDay = startDay === 0 ? 6 : startDay - 1; // Mon=0
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  for(let i=0;i<startDay;i++) {
+    const e = document.createElement('div'); e.className = 'cal-cell empty'; grid.appendChild(e);
+  }
+  for(let d=1; d<=daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dateStr = toDateStr(date);
+    const e = document.createElement('div');
+    e.textContent = d;
+    e.className = 'cal-cell';
+    const isToday = date.getTime() === today.getTime();
+    if(isToday) e.classList.add('today');
+    if(date < today) { e.classList.add('past'); }
+    else if(isDateBlocked(dateStr)) { e.classList.add('blocked'); }
+    else {
+      e.classList.add('available');
+      if(state.selectedDate === dateStr) e.classList.add('selected');
+      e.onclick = () => selectDate(dateStr, e);
+    }
+    grid.appendChild(e);
+  }
+}
+
+function toDateStr(date) {
+  return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+}
+
+function selectDate(dateStr, el) {
+  state.selectedDate = dateStr;
+  state.selectedTime = null;
+  document.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  renderSlots();
+  document.getElementById('stepSlots').style.display = 'block';
+  updateSummary();
+  updateSteps();
+  checkSubmit();
+}
+
+function changeMonth(dir) {
+  state.month += dir;
+  if(state.month > 11) { state.month = 0; state.year++; }
+  if(state.month < 0) { state.month = 11; state.year--; }
+  renderCalendar();
+}
+
+// ─── SLOTS ───────────────────────────────────────────────────────
+function renderSlots() {
+  const c = document.getElementById('slotsContainer');
+  if(!state.selectedDate) { c.innerHTML = ''; return; }
+  const available = BASE_HOURS.filter(h => {
+    return !isSlotTaken(state.selectedDate, h) && !isHourBlocked(state.selectedDate, h);
+  });
+  if(available.length === 0) {
+    c.innerHTML = '<div class="no-slots">Aucun créneau disponible ce jour 😕</div>'; return;
+  }
+  const grid = document.createElement('div'); grid.className = 'slots-grid';
+  BASE_HOURS.forEach(h => {
+    const btn = document.createElement('button');
+    btn.className = 'slot-btn';
+    btn.textContent = h+'h00';
+    const taken = isSlotTaken(state.selectedDate, h) || isHourBlocked(state.selectedDate, h);
+    if(taken) { btn.classList.add('taken'); btn.disabled = true; }
+    else {
+      if(state.selectedTime === h) btn.classList.add('selected');
+      btn.onclick = () => {
+        document.querySelectorAll('.slot-btn.selected').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        state.selectedTime = h;
+        updateSummary();
+        updateSteps();
+        showStepForm();
+        checkSubmit();
+      };
+    }
+    grid.appendChild(btn);
+  });
+  c.innerHTML = ''; c.appendChild(grid);
+}
+
+// ─── FORM & STEPS ────────────────────────────────────────────────
+function showStepForm() {
+  document.getElementById('stepForm').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('stepForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+function updateSteps() {
+  const steps = ['s1','s2','s3','s4'];
+  const lines = ['l1','l2','l3'];
+  const done = [!!state.prestation, !!state.selectedDate, state.selectedTime !== null, false];
+  steps.forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+    if(i < done.filter(Boolean).length) el.classList.add('done');
+    else if(i === done.filter(Boolean).length) el.classList.add('active');
+  });
+  lines.forEach((id,i) => {
+    const el = document.getElementById(id);
+    if(done[i]) el.classList.add('done'); else el.classList.remove('done');
+  });
+}
+
+function updateSummary() {
+  const bar = document.getElementById('summaryBar');
+  if(!state.prestation && !state.selectedDate) { bar.classList.remove('visible'); return; }
+  bar.classList.add('visible');
+  document.getElementById('sumPrestation').textContent = state.prestation || '—';
+  document.getElementById('sumDate').textContent = state.selectedDate ? formatDate(state.selectedDate) : '—';
+  document.getElementById('sumTime').textContent = state.selectedTime !== null ? state.selectedTime+'h00' : '—';
+  document.getElementById('sumTotal').textContent = state.price ? state.price+'€ (sur place)' : '—';
+}
+
+function formatDate(d) {
+  const [y,m,day] = d.split('-');
+  const days = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
+  const months = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+  const dt = new Date(+y,+m-1,+day);
+  return days[dt.getDay()]+' '+day+' '+months[+m-1];
+}
+
+function checkSubmit() {
+  const btn = document.getElementById('btnReserve');
+  const prenom = document.getElementById('fPrenom').value.trim();
+  const nom = document.getElementById('fNom').value.trim();
+  const tel = document.getElementById('fTel').value.trim();
+  const ready = state.prestation && state.selectedDate && state.selectedTime !== null && prenom && nom && tel;
+  btn.disabled = !ready;
+}
+
+document.querySelectorAll('input').forEach(i => i.addEventListener('input', checkSubmit));
+
+// ─── SUBMIT ──────────────────────────────────────────────────────
+async function submitBooking() {
+  const prenom = document.getElementById('fPrenom').value.trim();
+  const nom = document.getElementById('fNom').value.trim();
+  const tel = document.getElementById('fTel').value.trim();
+  if(!prenom || !nom || !tel) { showToast('Remplis tous les champs !'); return; }
+  if(isSlotTaken(state.selectedDate, state.selectedTime)) { showToast('Créneau déjà pris ! Choisis une autre heure.', true); renderSlots(); return; }
+
+  const btn = document.getElementById('btnReserve');
+  btn.classList.add('loading'); btn.disabled = true;
+
+  const booking = {
+    id: Date.now(),
+    prestation: state.prestation,
+    price: state.price,
+    date: state.selectedDate,
+    hour: state.selectedTime,
+    prenom, nom, tel,
+    createdAt: new Date().toISOString()
+  };
+
+  // Simule un délai réseau
+  await new Promise(r => setTimeout(r, 1000));
+
+  // Double check (cas race condition)
+  if(isSlotTaken(state.selectedDate, state.selectedTime)) {
+    btn.classList.remove('loading'); btn.disabled = false;
+    showToast('Créneau pris pendant ta saisie. Choisis un autre !', true);
+    renderSlots(); return;
+  }
+
+  saveBooking(booking);
+  btn.classList.remove('loading');
+
+  // Notification email via EmailJS (si configuré)
+  sendEmailNotification(booking);
+
+  showSuccess(booking);
+}
+
+// ─── EMAIL NOTIFICATION ──────────────────────────────────────────
+// Utilise EmailJS — à configurer dans l'admin
+function sendEmailNotification(booking) {
+  const config = getEmailConfig();
+  if(!config || !config.serviceId || !config.templateId || !config.publicKey) return;
+  if(typeof emailjs === 'undefined') return;
+  emailjs.init(config.publicKey);
+  emailjs.send(config.serviceId, config.templateId, {
+    from_name: booking.prenom + ' ' + booking.nom,
+    prestation: booking.prestation,
+    date: formatDate(booking.date),
+    heure: booking.hour+'h00',
+    telephone: booking.tel,
+    prix: booking.price+'€',
+    to_email: 'Sofianyakhlefpro@gmail.com'
+  }).catch(()=>{});
+}
+function getEmailConfig() {
+  try { return JSON.parse(localStorage.getItem('sonicecut_email') || 'null'); } catch(e) { return null; }
+}
+
+// ─── SUCCESS ─────────────────────────────────────────────────────
+function showSuccess(b) {
+  document.getElementById('bookingFlow').style.display = 'none';
+  const s = document.getElementById('successScreen');
+  s.classList.add('visible');
+  document.getElementById('successRecap').innerHTML = `
+    <div class="recap-row"><span class="recap-label">Nom</span><span class="recap-value">${b.prenom} ${b.nom}</span></div>
+    <div class="recap-row"><span class="recap-label">Prestation</span><span class="recap-value">${b.prestation}</span></div>
+    <div class="recap-row"><span class="recap-label">Date</span><span class="recap-value">${formatDate(b.date)}</span></div>
+    <div class="recap-row"><span class="recap-label">Heure</span><span class="recap-value">${b.hour}h00 — ${b.hour+1}h00</span></div>
+    <div class="recap-row"><span class="recap-label">Prix</span><span class="recap-value">${b.price}€ (sur place)</span></div>
+  `;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function resetBooking() {
+  state = { prestation: null, price: null, selectedDate: null, selectedTime: null, month: new Date().getMonth(), year: new Date().getFullYear() };
+  document.getElementById('bookingFlow').style.display = 'block';
+  document.getElementById('successScreen').classList.remove('visible');
+  document.querySelectorAll('.prestation-item').forEach(i => i.classList.remove('selected'));
+  document.getElementById('stepSlots').style.display = 'none';
+  document.getElementById('stepForm').style.display = 'none';
+  document.getElementById('summaryBar').classList.remove('visible');
+  document.getElementById('fPrenom').value = '';
+  document.getElementById('fNom').value = '';
+  document.getElementById('fTel').value = '';
+  document.getElementById('btnReserve').disabled = true;
+  updateSteps();
+  renderCalendar();
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? '' : ' green');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+renderCalendar();
+</script>
+
+<!-- EmailJS (pour les notifications) — chargé mais utilisé seulement si configuré -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</body>
+</html>

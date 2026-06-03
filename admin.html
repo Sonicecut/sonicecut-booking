@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sonice Cut — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --electric: #0066FF;
+    --deep: #001A4D;
+    --ice: #C8DCFF;
+    --ice-soft: #EAF1FF;
+    --mid: #0044BB;
+    --white: #FFFFFF;
+    --glass: rgba(0,102,255,0.08);
+    --border: rgba(0,102,255,0.2);
+    --text: #0D1B3E;
+    --muted: #4A6080;
+    --success: #00C875;
+    --error: #FF3B3B;
+    --warn: #FFB020;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--deep);
+    color: var(--white);
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,102,255,0.3) 0%, transparent 70%), var(--deep);
+    pointer-events: none;
+  }
+
+  /* LOGIN */
+  .login-screen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--deep);
+    padding: 20px;
+  }
+  .login-screen::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 50% at 50% 30%, rgba(0,102,255,0.3) 0%, transparent 70%);
+  }
+  .login-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 100%; max-width: 360px;
+    position: relative; z-index: 1;
+    text-align: center;
+  }
+  .login-logo { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 0.05em; margin-bottom: 6px;
+    background: linear-gradient(135deg, #fff 0%, var(--ice) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .login-sub { font-size: 12px; color: rgba(200,220,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 32px; }
+  .login-label { display: block; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ice); opacity: 0.6; margin-bottom: 8px; }
+  .login-input {
+    width: 100%; padding: 14px 16px;
+    background: rgba(255,255,255,0.06); border: 1.5px solid var(--border);
+    border-radius: 12px; color: var(--white); font-size: 15px;
+    font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s;
+    margin-bottom: 20px;
+  }
+  .login-input:focus { border-color: var(--electric); }
+  .login-btn {
+    width: 100%; padding: 15px; background: var(--electric);
+    border: none; border-radius: 14px; color: #fff;
+    font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .login-btn:hover { background: #0055DD; }
+  .login-err { color: var(--error); font-size: 12px; margin-top: 12px; display: none; }
+
+  /* ADMIN APP */
+  .admin-app { display: none; position: relative; z-index: 1; }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(10px);
+  }
+  .topbar-brand { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.05em; }
+  .topbar-brand span { color: var(--electric); }
+  .logout-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 10px; color: rgba(200,220,255,0.5);
+    font-size: 12px; padding: 8px 14px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .logout-btn:hover { color: var(--white); border-color: var(--electric); }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex; gap: 4px; padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 10px 18px; border-radius: 10px;
+    background: transparent; border: 1px solid transparent;
+    color: rgba(200,220,255,0.4); font-size: 13px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav-tab.active { background: var(--electric); color: #fff; border-color: var(--electric); }
+  .nav-tab:hover:not(.active) { border-color: var(--border); color: var(--white); }
+
+  /* CONTENT */
+  .tab-content { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 22px; margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--electric);
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::before { content: ''; width: 16px; height: 2px; background: var(--electric); border-radius: 2px; display: block; }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: rgba(0,102,255,0.1); border: 1px solid rgba(0,102,255,0.2); border-radius: 14px; padding: 14px; text-align: center; }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: var(--ice); letter-spacing: 0.05em; }
+  .stat-label { font-size: 10px; color: rgba(200,220,255,0.4); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+  /* RDV LIST */
+  .rdv-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 0; border-bottom: 1px solid rgba(0,102,255,0.1);
+  }
+  .rdv-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .rdv-time {
+    background: rgba(0,102,255,0.15); border-radius: 10px;
+    padding: 8px 12px; text-align: center; flex-shrink: 0; min-width: 56px;
+  }
+  .rdv-time-h { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--electric); line-height: 1; }
+  .rdv-time-d { font-size: 10px; color: rgba(200,220,255,0.4); margin-top: 2px; }
+  .rdv-info { flex: 1; }
+  .rdv-name { font-weight: 600; font-size: 14px; }
+  .rdv-detail { font-size: 12px; color: rgba(200,220,255,0.5); margin-top: 2px; }
+  .rdv-price { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--electric); }
+  .rdv-delete { background: rgba(255,59,59,0.1); border: 1px solid rgba(255,59,59,0.2); border-radius: 8px; color: var(--error); font-size: 12px; padding: 6px 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
+  .rdv-delete:hover { background: rgba(255,59,59,0.2); }
+  .empty-state { text-align: center; color: rgba(200,220,255,0.3); font-size: 13px; padding: 30px 0; }
+
+  /* CALENDAR BLOCK */
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-month { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.05em; }
+  .cal-nav { display: flex; gap: 6px; }
+  .cal-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: #fff; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .cal-btn:hover { background: var(--electric); }
+  .cal-days-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 4px; }
+  .cal-day-name { text-align: center; font-size: 10px; color: rgba(200,220,255,0.3); padding: 3px 0; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; transition: all 0.2s; border: 1.5px solid transparent; }
+  .cal-cell.empty { cursor: default; }
+  .cal-cell.past { color: rgba(200,220,255,0.15); cursor: default; }
+  .cal-cell.normal { color: var(--white); }
+  .cal-cell.normal:hover { background: var(--glass); border-color: var(--border); }
+  .cal-cell.has-rdv { background: rgba(0,102,255,0.15); border-color: rgba(0,102,255,0.3); color: var(--ice); }
+  .cal-cell.blocked-day { background: rgba(255,59,59,0.12); border-color: rgba(255,59,59,0.25); color: rgba(255,59,59,0.7); text-decoration: line-through; }
+  .cal-cell.selected-admin { border-color: var(--electric); background: rgba(0,102,255,0.2); }
+  .cal-cell.today { outline: 1.5px solid var(--electric); outline-offset: 1px; }
+
+  /* SLOT MANAGER */
+  .slot-manager { margin-top: 18px; }
+  .slot-manager-title { font-size: 12px; color: rgba(200,220,255,0.5); margin-bottom: 10px; }
+  .slots-admin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .slot-admin-btn {
+    padding: 10px 6px; border-radius: 10px; font-size: 12px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s;
+    text-align: center; border: 1.5px solid rgba(0,102,255,0.2);
+    background: transparent; color: var(--white);
+  }
+  .slot-admin-btn:hover { border-color: var(--electric); background: var(--glass); }
+  .slot-admin-btn.taken { background: rgba(0,200,117,0.1); border-color: rgba(0,200,117,0.3); color: var(--success); cursor: default; }
+  .slot-admin-btn.blocked-slot { background: rgba(255,59,59,0.1); border-color: rgba(255,59,59,0.25); color: var(--error); }
+  .slot-admin-btn.available-slot { }
+  .block-day-btn {
+    width: 100%; margin-top: 14px; padding: 12px;
+    border-radius: 12px; font-size: 13px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s;
+    border: 1.5px solid rgba(255,59,59,0.3); background: rgba(255,59,59,0.08);
+    color: var(--error);
+  }
+  .block-day-btn.unblock { border-color: rgba(0,200,117,0.3); background: rgba(0,200,117,0.08); color: var(--success); }
+  .block-day-btn:hover { opacity: 0.8; }
+
+  /* EMAIL CONFIG */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ice); opacity: 0.6; margin-bottom: 8px; }
+  .form-input {
+    width: 100%; padding: 13px 14px;
+    background: rgba(255,255,255,0.05); border: 1.5px solid var(--border);
+    border-radius: 12px; color: var(--white); font-size: 14px;
+    font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--electric); }
+  .form-input::placeholder { color: rgba(200,220,255,0.3); }
+  .save-btn {
+    width: 100%; padding: 14px; background: var(--electric); border: none;
+    border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 6px;
+    transition: all 0.2s;
+  }
+  .save-btn:hover { background: #0055DD; }
+  .save-btn.secondary { background: transparent; border: 1.5px solid var(--border); color: rgba(200,220,255,0.6); margin-top: 8px; }
+  .save-btn.danger { background: rgba(255,59,59,0.1); border: 1.5px solid rgba(255,59,59,0.3); color: var(--error); margin-top: 8px; }
+
+  .info-box { background: rgba(0,102,255,0.08); border: 1px solid rgba(0,102,255,0.2); border-radius: 12px; padding: 14px; font-size: 12px; color: rgba(200,220,255,0.7); line-height: 1.6; margin-bottom: 14px; }
+  .info-box a { color: var(--electric); }
+  .info-box strong { color: var(--ice); }
+
+  /* BADGE */
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .badge-blue { background: rgba(0,102,255,0.2); color: var(--electric); }
+  .badge-green { background: rgba(0,200,117,0.15); color: var(--success); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--success); color: #fff; padding: 12px 24px; border-radius: 50px; font-size: 13px; font-weight: 500; transition: transform 0.3s; z-index: 200; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.red { background: var(--error); }
+
+  /* Legend */
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(200,220,255,0.5); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">ADMIN</div>
+    <div class="login-sub">Sonice Cut — Espace Pro</div>
+    <label class="login-label">Mot de passe</label>
+    <input type="password" class="login-input" id="loginPwd" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="login-btn" onclick="doLogin()">Accéder au tableau de bord</button>
+    <div class="login-err" id="loginErr">Mot de passe incorrect</div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div class="admin-app" id="adminApp">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand">SONICE <span>ADMIN</span></div>
+    <button class="logout-btn" onclick="logout()">Déconnexion</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('dashboard')">📊 Tableau de bord</button>
+    <button class="nav-tab" onclick="showTab('planning')">📅 Planning</button>
+    <button class="nav-tab" onclick="showTab('settings')">⚙️ Paramètres</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="tab-content active" id="tab-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="statToday">0</div>
+        <div class="stat-label">Aujourd'hui</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statWeek">0</div>
+        <div class="stat-label">Cette semaine</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statRevenue">0€</div>
+        <div class="stat-label">Semaine CA</div>
+      </div>
+    </div>
+
+    <!-- RDV AUJOURD'HUI -->
+    <div class="card">
+      <div class="card-title">Rendez-vous aujourd'hui</div>
+      <div id="rdvToday"></div>
+    </div>
+
+    <!-- PROCHAINS RDV -->
+    <div class="card">
+      <div class="card-title">Prochains rendez-vous</div>
+      <div id="rdvUpcoming"></div>
+    </div>
+  </div>
+
+  <!-- PLANNING -->
+  <div class="tab-content" id="tab-planning">
+    <div class="card">
+      <div class="card-title">Gestion des disponibilités</div>
+      <div class="cal-header">
+        <div class="cal-month" id="adminCalMonth"></div>
+        <div class="cal-nav">
+          <button class="cal-btn" onclick="adminChangeMonth(-1)">‹</button>
+          <button class="cal-btn" onclick="adminChangeMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="cal-days-header">
+        <div class="cal-day-name">L</div><div class="cal-day-name">M</div>
+        <div class="cal-day-name">M</div><div class="cal-day-name">J</div>
+        <div class="cal-day-name">V</div><div class="cal-day-name">S</div>
+        <div class="cal-day-name">D</div>
+      </div>
+      <div class="cal-grid" id="adminCalGrid"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(0,102,255,0.3)"></div>A des RDV</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,59,59,0.3)"></div>Journée bloquée</div>
+        <div class="legend-item"><div class="legend-dot" style="outline:1.5px solid #0066FF; outline-offset:1px"></div>Aujourd'hui</div>
+      </div>
+    </div>
+
+    <!-- SLOT MANAGER -->
+    <div class="card" id="slotManagerCard" style="display:none">
+      <div class="card-title">Gérer le <span id="slotDateTitle"></span></div>
+      <div class="slot-manager">
+        <div class="slot-manager-title">Appuie sur un créneau pour le bloquer ou débloquer :</div>
+        <div class="slots-admin-grid" id="adminSlotsGrid"></div>
+        <button class="block-day-btn" id="blockDayBtn" onclick="toggleBlockDay()"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="tab-content" id="tab-settings">
+    <div class="card">
+      <div class="card-title">Mot de passe admin</div>
+      <div class="form-group">
+        <label class="form-label">Nouveau mot de passe</label>
+        <input type="password" class="form-input" id="newPwd" placeholder="Minimum 6 caractères">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmer</label>
+        <input type="password" class="form-input" id="confirmPwd" placeholder="Répète le mot de passe">
+      </div>
+      <button class="save-btn" onclick="savePassword()">Enregistrer le mot de passe</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Notifications Email</div>
+      <div class="info-box">
+        Pour recevoir des emails à chaque réservation, configure <strong>EmailJS</strong> gratuitement.<br>
+        1. Va sur <a href="https://emailjs.com" target="_blank">emailjs.com</a> → crée un compte gratuit<br>
+        2. Crée un <strong>Email Service</strong> (Gmail) → note le <strong>Service ID</strong><br>
+        3. Crée un <strong>Email Template</strong> avec les variables : <code>{{from_name}}</code>, <code>{{prestation}}</code>, <code>{{date}}</code>, <code>{{heure}}</code>, <code>{{telephone}}</code><br>
+        4. Note le <strong>Template ID</strong> et ta <strong>Public Key</strong> (Account → API Keys)
+      </div>
+      <div class="form-group">
+        <label class="form-label">Service ID</label>
+        <input type="text" class="form-input" id="emailService" placeholder="service_xxxxxxx">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Template ID</label>
+        <input type="text" class="form-input" id="emailTemplate" placeholder="template_xxxxxxx">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Public Key</label>
+        <input type="text" class="form-input" id="emailPublic" placeholder="xxxxxxxxxxxxxxxx">
+      </div>
+      <button class="save-btn" onclick="saveEmailConfig()">Enregistrer la config email</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Données</div>
+      <p style="font-size:13px; color:rgba(200,220,255,0.5); margin-bottom:14px;">Exporte ou réinitialise les données de réservation.</p>
+      <button class="save-btn secondary" onclick="exportData()">📥 Exporter les données (JSON)</button>
+      <button class="save-btn danger" onclick="clearOldData()">🗑️ Supprimer les anciens RDV (>30j)</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── AUTH ─────────────────────────────────────────────────────────
+const DEFAULT_PWD = 'sonice2024';
+function getPassword() { return localStorage.getItem('sonicecut_admin_pwd') || DEFAULT_PWD; }
+function doLogin() {
+  const val = document.getElementById('loginPwd').value;
+  if(val === getPassword()) {
+    sessionStorage.setItem('sc_admin', '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'block';
+    initAdmin();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+    setTimeout(() => document.getElementById('loginErr').style.display='none', 3000);
+  }
+}
+function logout() { sessionStorage.removeItem('sc_admin'); location.reload(); }
+if(sessionStorage.getItem('sc_admin') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminApp').style.display = 'block';
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────
+const STORAGE_KEY = 'sonicecut_bookings';
+const BLOCKED_KEY = 'sonicecut_blocked';
+function getBookings() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e){return[];} }
+function getBlocked() { try { return JSON.parse(localStorage.getItem(BLOCKED_KEY)||'{}'); } catch(e){return {};} }
+function saveBlocked(b) { localStorage.setItem(BLOCKED_KEY, JSON.stringify(b)); }
+function deleteBooking(id) {
+  const all = getBookings().filter(b => b.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  initAdmin();
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────
+function toDateStr(date) {
+  return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+}
+const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const DAYS_SHORT = ['dim','lun','mar','mer','jeu','ven','sam'];
+const MONTHS_SHORT = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+function formatDate(d) {
+  const [y,m,day] = d.split('-');
+  const dt = new Date(+y,+m-1,+day);
+  return DAYS_SHORT[dt.getDay()]+' '+day+' '+MONTHS_SHORT[+m-1];
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────────
+function initAdmin() {
+  renderDashboard();
+  renderAdminCalendar();
+  loadEmailConfig();
+}
+
+function renderDashboard() {
+  const bookings = getBookings();
+  const today = toDateStr(new Date());
+  const now = new Date(); now.setHours(0,0,0,0);
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + (now.getDay()===0?-6:1));
+  const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+7);
+
+  const todayRdv = bookings.filter(b => b.date === today).sort((a,b)=>a.hour-b.hour);
+  const weekRdv = bookings.filter(b => { const d=new Date(b.date); return d>=weekStart && d<weekEnd; });
+  const weekRevenue = weekRdv.reduce((s,b)=>s+(b.price||0),0);
+
+  document.getElementById('statToday').textContent = todayRdv.length;
+  document.getElementById('statWeek').textContent = weekRdv.length;
+  document.getElementById('statRevenue').textContent = weekRevenue+'€';
+
+  // Today RDV
+  const todayEl = document.getElementById('rdvToday');
+  if(todayRdv.length === 0) { todayEl.innerHTML = '<div class="empty-state">Aucun rendez-vous aujourd\'hui</div>'; }
+  else { todayEl.innerHTML = todayRdv.map(b=>rdvCard(b)).join(''); }
+
+  // Upcoming
+  const upcoming = bookings.filter(b => { const d=new Date(b.date); d.setHours(0,0,0,0); return d>now; }).sort((a,b)=>a.date.localeCompare(b.date)||a.hour-b.hour).slice(0,10);
+  const upEl = document.getElementById('rdvUpcoming');
+  if(upcoming.length === 0) { upEl.innerHTML = '<div class="empty-state">Aucun prochain rendez-vous</div>'; }
+  else { upEl.innerHTML = upcoming.map(b=>rdvCard(b)).join(''); }
+}
+
+function rdvCard(b) {
+  return `<div class="rdv-item">
+    <div class="rdv-time"><div class="rdv-time-h">${b.hour}h</div><div class="rdv-time-d">${formatDate(b.date)}</div></div>
+    <div class="rdv-info">
+      <div class="rdv-name">${b.prenom} ${b.nom}</div>
+      <div class="rdv-detail">${b.prestation} · 📞 ${b.tel}</div>
+    </div>
+    <div class="rdv-price">${b.price}€</div>
+    <button class="rdv-delete" onclick="if(confirm('Supprimer ce RDV ?')) deleteBooking(${b.id})">✕</button>
+  </div>`;
+}
+
+// ─── ADMIN CALENDAR ───────────────────────────────────────────────
+let adminState = { month: new Date().getMonth(), year: new Date().getFullYear(), selectedDate: null };
+
+function renderAdminCalendar() {
+  const grid = document.getElementById('adminCalGrid');
+  const { month, year } = adminState;
+  document.getElementById('adminCalMonth').textContent = MONTHS_FR[month] + ' ' + year;
+  grid.innerHTML = '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const first = new Date(year, month, 1);
+  let startDay = first.getDay(); startDay = startDay===0?6:startDay-1;
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const bookings = getBookings();
+  const blocked = getBlocked();
+
+  for(let i=0;i<startDay;i++){const e=document.createElement('div');e.className='cal-cell empty';grid.appendChild(e);}
+  for(let d=1;d<=daysInMonth;d++){
+    const date = new Date(year,month,d);
+    const dateStr = toDateStr(date);
+    const e = document.createElement('div'); e.textContent=d; e.className='cal-cell';
+    const isToday = date.getTime()===today.getTime();
+    if(isToday) e.classList.add('today');
+    if(date<today) e.classList.add('past');
+    else {
+      const isBlocked = blocked[dateStr] && blocked[dateStr].allDay;
+      const hasRdv = bookings.some(b=>b.date===dateStr);
+      if(isBlocked) e.classList.add('blocked-day');
+      else if(hasRdv) e.classList.add('has-rdv');
+      else e.classList.add('normal');
+      if(adminState.selectedDate===dateStr) e.classList.add('selected-admin');
+      e.onclick=()=>selectAdminDate(dateStr,e);
+    }
+    grid.appendChild(e);
+  }
+}
+
+function adminChangeMonth(dir) {
+  adminState.month+=dir;
+  if(adminState.month>11){adminState.month=0;adminState.year++;}
+  if(adminState.month<0){adminState.month=11;adminState.year--;}
+  renderAdminCalendar();
+}
+
+function selectAdminDate(dateStr, el) {
+  adminState.selectedDate = dateStr;
+  document.querySelectorAll('#adminCalGrid .cal-cell.selected-admin').forEach(c=>c.classList.remove('selected-admin'));
+  el.classList.add('selected-admin');
+  document.getElementById('slotManagerCard').style.display='block';
+  document.getElementById('slotDateTitle').textContent = formatDate(dateStr);
+  renderAdminSlots(dateStr);
+  updateBlockDayBtn(dateStr);
+  document.getElementById('slotManagerCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function renderAdminSlots(dateStr) {
+  const grid = document.getElementById('adminSlotsGrid');
+  const bookings = getBookings();
+  const blocked = getBlocked();
+  const hours = [];
+  for(let h=10;h<=20;h++) hours.push(h);
+  grid.innerHTML='';
+  hours.forEach(h => {
+    const btn = document.createElement('button');
+    btn.className='slot-admin-btn'; btn.textContent=h+'h00';
+    const isTaken = bookings.some(b=>b.date===dateStr&&b.hour===h);
+    const isBlocked = blocked[dateStr]&&blocked[dateStr].hours&&blocked[dateStr].hours.includes(h);
+    if(isTaken) { btn.classList.add('taken'); btn.title='Réservé'; }
+    else if(isBlocked) { btn.classList.add('blocked-slot'); btn.onclick=()=>toggleSlot(dateStr,h,false); }
+    else { btn.classList.add('available-slot'); btn.onclick=()=>toggleSlot(dateStr,h,true); }
+    grid.appendChild(btn);
+  });
+}
+
+function toggleSlot(dateStr, hour, block) {
+  const b = getBlocked();
+  if(!b[dateStr]) b[dateStr]={hours:[]};
+  if(!b[dateStr].hours) b[dateStr].hours=[];
+  if(block) { if(!b[dateStr].hours.includes(hour)) b[dateStr].hours.push(hour); }
+  else { b[dateStr].hours=b[dateStr].hours.filter(h=>h!==hour); }
+  saveBlocked(b);
+  renderAdminSlots(dateStr);
+  renderAdminCalendar();
+  showToast(block?'Créneau bloqué':'Créneau débloqué');
+}
+
+function updateBlockDayBtn(dateStr) {
+  const b = getBlocked();
+  const isBlocked = b[dateStr]&&b[dateStr].allDay;
+  const btn = document.getElementById('blockDayBtn');
+  btn.textContent = isBlocked ? '✅ Débloquer cette journée entière' : '🚫 Bloquer toute la journée';
+  btn.className = 'block-day-btn' + (isBlocked?' unblock':'');
+}
+
+function toggleBlockDay() {
+  const dateStr = adminState.selectedDate; if(!dateStr) return;
+  const b = getBlocked();
+  if(!b[dateStr]) b[dateStr]={hours:[]};
+  b[dateStr].allDay = !b[dateStr].allDay;
+  saveBlocked(b);
+  updateBlockDayBtn(dateStr);
+  renderAdminCalendar();
+  renderAdminSlots(dateStr);
+  showToast(b[dateStr].allDay?'Journée bloquée':'Journée débloquée');
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────
+function savePassword() {
+  const p = document.getElementById('newPwd').value;
+  const c = document.getElementById('confirmPwd').value;
+  if(p.length < 6) { showToast('6 caractères minimum', true); return; }
+  if(p !== c) { showToast('Les mots de passe ne correspondent pas', true); return; }
+  localStorage.setItem('sonicecut_admin_pwd', p);
+  document.getElementById('newPwd').value=''; document.getElementById('confirmPwd').value='';
+  showToast('Mot de passe enregistré ✓');
+}
+
+function saveEmailConfig() {
+  const cfg = {
+    serviceId: document.getElementById('emailService').value.trim(),
+    templateId: document.getElementById('emailTemplate').value.trim(),
+    publicKey: document.getElementById('emailPublic').value.trim()
+  };
+  localStorage.setItem('sonicecut_email', JSON.stringify(cfg));
+  showToast('Config email enregistrée ✓');
+}
+
+function loadEmailConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('sonicecut_email')||'null');
+    if(cfg) {
+      document.getElementById('emailService').value = cfg.serviceId||'';
+      document.getElementById('emailTemplate').value = cfg.templateId||'';
+      document.getElementById('emailPublic').value = cfg.publicKey||'';
+    }
+  } catch(e){}
+}
+
+function exportData() {
+  const data = { bookings: getBookings(), blocked: getBlocked(), exportDate: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='sonicecut-data-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+
+function clearOldData() {
+  if(!confirm('Supprimer les RDV de plus de 30 jours ?')) return;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30);
+  const kept = getBookings().filter(b => new Date(b.date) >= cutoff);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
+  renderDashboard(); showToast('Nettoyage effectué');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────
+function showToast(msg, err=false) {
+  const t=document.getElementById('toast'); t.textContent=msg;
+  t.className='toast show'+(err?' red':'');
+  setTimeout(()=>t.className='toast',3000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+if(sessionStorage.getItem('sc_admin')==='1') initAdmin();
+</script>
+</body>
+</html>
